@@ -46,7 +46,7 @@ $ git commit -m 'Add analysis.py'
 $ git commit -m 'Update anlysis.py'
 
 # 추가 메세지 작성이 필요할 때
-$ git commit -m 'Update anlysis_KBH.py
+$ git commit -m 'Update anlysis_YJW.py
 >
 >준웅님 작업하셨던 파일에 일부 수정하였습니다'  
 ```
