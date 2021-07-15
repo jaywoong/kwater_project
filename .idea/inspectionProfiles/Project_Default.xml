@@ -4,10 +4,8 @@
     <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoredIdentifiers">
         <list>
-          <option value="mymodule" />
-          <option value="test03.reportA" />
-          <option value="test03.reportB" />
-          <option value="iot.result" />
+          <option value="test01.mypackage" />
+          <option value="str.include" />
         </list>
       </option>
     </inspection_tool>
