@@ -31,3 +31,26 @@
 
 
 
+## Git 사용할 때
+
+1. 작업 시작전에 pull을 하여서 가장 최신 버전을 받고 시작하기
+
+   <br>
+
+2. Commit Message 작성할 때 '<동사> <작업파일>' 형식으로 통일하기
+
+```bash
+$ git commit -m 'Add analysis.py'
+$ git commit -m 'Update anlysis.py'
+
+# 추가 메세지 작성이 필요할 때
+$ git commit -m 'Update anlysis_KBH.py
+>
+>준웅님 작업하셨던 파일에 일부 수정하였습니다'  
+```
+
+<br>
+
+2. 파일명은 최종으로 합쳐지기 전까지 '<파일명_KSR.py>'처럼 이니셜을 붙여서 따로 관리하기
+
+   
