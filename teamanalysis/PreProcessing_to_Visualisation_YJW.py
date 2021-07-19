@@ -31,7 +31,6 @@ df.drop(['총대장균군(기준:0/ 단위:MPN)', '대장균/분원성대장균�
 df.drop(['냄새(기준:0/ 단위:(mg/L))', '맛(기준:0/ 단위:(mg/L))'], axis=1, inplace=True)
 df.drop('탁도(기준:0.5/ 단위:(NTU))', axis=1, inplace=True)
 water = df.copy() #(drop한후의 물데이터)
-water.rename({'수도사업자': '지역'}, axis=1, inplace=True)
 #print(water)
 
 #------------------------------------------------------------------------------------
@@ -44,22 +43,51 @@ df1.index = range(16);
 health = df1.copy()
 
 #------------------------------------------------------------------------------------
-# 물 결측치 값 처리 ( 1.결측치 값 0치환, 2.결측치 행 drop, 3.평균으로...)
-# 1 [4985 rows x 57 columns]
-water.fillna(0, inplace=True);
+# 물 결측치 값 처리 ( 0,0을 NaN으로 1,NaN행을 drop, 2,평균값으로 대체 )
+
+# 0([4985 rows x 52 columns])
+# NaN을 0으로 치환하여 0과 NaN을 똑같이 취급함
+water.replace(0, np.nan, inplace=True)
+#모든 컬럼에 대하여 결측치 개수 확인
+nan_num = water.isnull().sum()                        # 결측치 수
+drop_list = list(nan_num[nan_num == len(water)].index)   # drop할 컬럼명 list (5개 항목)
+water = df.drop(drop_list, axis=1)
+water.fillna(0, inplace=True)                       # 남은 NaN은 다시 0으로 되돌리기
+water.rename({'수도사업자':'지역'}, axis=1, inplace=True)
 #print(water);
-# 2 [4657 rows x 57 columns]
-# water.dropna(axis=0, inplace=True)
-# print(water)
-# 3 ~
+
+# 1 NaN이 있는 행을 drop ([4985 rows x 57 columns])
+#NaN을 0으로 치환하여 0과 NaN을 똑같이 취급함
+water = water.dropna(axis=0)
+df.isnull().sum()
+water.replace(0, np.nan, inplace=True)
+#모든 컬럼에 대하여 결측치 개수 확인
+nan_num = water.isnull().sum()                        # 결측치 수
+drop_list = list(nan_num[nan_num == len(water)].index)   # drop할 컬럼명 list (5개 항목)
+water = df.drop(drop_list, axis=1)
+water.fillna(0, inplace=True)                       # 남은 NaN은 다시 0으로 되돌리기
+water.rename({'수도사업자':'지역'}, axis=1, inplace=True)
+#print(water);
+
+# 2 NaN에 평균값을 넣음 ([4985 rows x 52 columns])
+water.groupby('지역').mean()
+fill = lambda g: g.fillna(g.mean())
+water.groupby('지역').apply(fill)
+water.replace(0, np.nan, inplace=True)
+#모든 컬럼에 대하여 결측치 개수 확인
+nan_num = water.isnull().sum()                        # 결측치 수
+drop_list = list(nan_num[nan_num == len(water)].index)   # drop할 컬럼명 list (5개 항목)
+water = df.drop(drop_list, axis=1)
+water.fillna(0, inplace=True)                       # 남은 NaN은 다시 0으로 되돌리기
 #print(water)
+water.rename({'수도사업자':'지역'}, axis=1, inplace=True)
 
 #------------------------------------------------------------------------------------
+
 #Analysis
-
-class Fx:
-    def waterQualByCity(self): #각 지역별 1년 평균 물질 농도를 계산하여 dataframe을 반환하는 함수
-
+class fx:
+    def waterQualByCity(self):
+        #각 지역별 1년 평균 물질 농도를 계산하여 dataframe을 반환하는 함수
         lst = []  # Dataframe 만들기 위해서 준비
         cities = ['서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시', '대전광역시', '울산광역시', '세종특별자치시', '경기도', '강원도', '충청북도',
                   '충청남도', '전라북도', '전라남도', '경상북도', '경상남도', '제주특별자치도']
@@ -68,28 +96,37 @@ class Fx:
         for city in cities:
             ct_conc = [city]  # 하나의 도시에 대해, 이름과 모든 물질의 농도를 모은 리스트
             for conc in concs:
-                ct_water = water[water['지역'].str.contains(city)]
+                df = water[water['지역'].str.contains(city)]
+                ct_water = df.copy()
                 if conc == '일반세균(기준:100/ 단위:(CFU/mL))':
-                        ct_water.loc[:,'월별물질농도(CFU/일)'] = ct_water.loc[:,'시설용량(㎥/일)'] * ct_water.loc[:,conc] * (10 ** 6)
-                        t_conc = ct_water['월별물질농도(CFU/일)'].sum() / ct_water['시설용량(㎥/일)'].sum() * (10 ** -6)
+                    ct_water['월별물질농도(CFU/일)'] = ct_water['시설용량(㎥/일)'] * ct_water[conc] * (10 ** 6)
+                    if ct_water['시설용량(㎥/일)'].sum() == 0:
+                        t_conc = 0
+                    else:
+                        t_conc = (ct_water['월별물질농도(CFU/일)'].sum() / ct_water['시설용량(㎥/일)'].sum()) * (10 ** -6)
                         # 2018년, xx지역, 일반세균 평균 농도(CFU/mL)
+
                 elif conc == '수소이온농도(기준:5.8 ~ 8.5/ 단위:-)':
-                        ct_water.loc[:,conc] = ct_water.loc[:,conc].apply(lambda x: 1 / 10 ** x)  # pH를 [H+](단위:mol/L)로 바꾸는 과정
-                        ct_water.loc[:,'월별물질농도(mol/일)'] = ct_water.loc[:,'시설용량(㎥/일)'] * ct_water.loc[:,conc] * 1000
-                        t_conc = ct_water.loc[:,('월별물질농도(mol/일)')].sum() / ct_water.loc[:,('시설용량(㎥/일)')].sum() * 0.001
-                        # 2018년, xx지역, 수소이온 평균 농도(mol/L)
+                    ct_water[conc] = ct_water[conc].apply(lambda x: 1 / 10 ** x)
+                    # pH를 [H+](단위:mol/L)로 바꾸는 과정
+                    ct_water['월별물질농도(mol/일)'] = ct_water['시설용량(㎥/일)'] * ct_water[conc] * 1000
+                    if ct_water['시설용량(㎥/일)'].sum() == 0:
+                        t_conc = 0
+                    else:
+                        t_conc = (ct_water['월별물질농도(mol/일)'].sum() / ct_water['시설용량(㎥/일)'].sum()) * 0.001  # 2018년, xx지역, 수소이온 평균 농도(mol/L)
                         t_conc = -np.log10(t_conc)  # 원래대로 pH로 변환
 
                 else:  # '색도'포함
-                        ct_water.loc[:,'월별물질농도(mg/일)'] = ct_water.loc[:,'시설용량(㎥/일)'] * ct_water.loc[:,conc] * 1000
-                        t_conc = ct_water.loc[:,'월별물질농도(mg/일)'].sum() / ct_water.loc[:,'시설용량(㎥/일)'].sum() * 0.001
-                        # 2018년, xx지역, xx 물질 평균 농도(mg/L)
-
+                    ct_water['월별물질농도(mg/일)'] = ct_water['시설용량(㎥/일)'] * ct_water[conc] * 1000
+                    if ct_water['시설용량(㎥/일)'].sum() == 0:
+                        t_conc = 0
+                    else:
+                        t_conc = (ct_water['월별물질농도(mg/일)'].sum() / ct_water['시설용량(㎥/일)'].sum()) * 0.001  # 2018년, xx지역, xx 물질 평균 농도(mg/L)
                 ct_conc.append(t_conc)
             lst.append(ct_conc)
+
         result = pd.DataFrame(lst, columns=['지역'] + list(concs))
-        return result
-#RuntimeWarning: invalid value encountered in longlong_scalars
-#RuntimeWarning: invalid value encountered in double_scalars....
+        print(result);
+
 if __name__ == '__main__':
-    Fx().waterQualByCity()
+    fx().waterQualByCity()
