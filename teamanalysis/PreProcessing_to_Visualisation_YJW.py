@@ -77,8 +77,8 @@ water.replace(0, np.nan, inplace=True)
 #모든 컬럼에 대하여 결측치 개수 확인
 nan_num = water.isnull().sum()                        # 결측치 수
 drop_list = list(nan_num[nan_num == len(water)].index)   # drop할 컬럼명 list (5개 항목)
-water = df.drop(drop_list, axis=1)
-water.fillna(0, inplace=True)                       # 남은 NaN은 다시 0으로 되돌리기
+water = df.drop(drop_list, axis=1);
+water.fillna(0, inplace=True);                     # 남은 NaN은 다시 0으로 되돌리기
 #print(water)
 water.rename({'수도사업자':'지역'}, axis=1, inplace=True);
 
