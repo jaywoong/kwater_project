@@ -80,7 +80,8 @@ drop_list = list(nan_num[nan_num == len(water)].index)   # drop할 컬럼명 lis
 water = df.drop(drop_list, axis=1)
 water.fillna(0, inplace=True)                       # 남은 NaN은 다시 0으로 되돌리기
 #print(water)
-water.rename({'수도사업자':'지역'}, axis=1, inplace=True)
+water.rename({'수도사업자':'지역'}, axis=1, inplace=True);
+
 
 #------------------------------------------------------------------------------------
 
